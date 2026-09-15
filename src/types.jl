@@ -1,4 +1,4 @@
-export Externref
+export Externref, HostRefStream
 
 """
     Externref()
@@ -12,6 +12,11 @@ struct Externref
     dummy::Int32
 end
 Externref() = Int32(-1)
+
+struct EndiveRef
+    dummy::Int32
+end
+EndiveRef() = Int32(-1)
 
 struct Box{T}
     x::T
@@ -29,6 +34,7 @@ wtypes() = Dict{Any, BinaryenType}(
     # Symbol    => BinaryenTypeStringref(),
     # String    => BinaryenTypeStringref(),
     Externref => BinaryenTypeExternref(),
+    EndiveRef => BinaryenTypeExternref(),
     Any       => BinaryenTypeEqref(),
     Union{}   => BinaryenTypeNone(),
     Core.TypeofBottom => BinaryenTypeNone(),

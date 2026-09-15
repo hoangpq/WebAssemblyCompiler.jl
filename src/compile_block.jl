@@ -705,15 +705,26 @@ function compile_block(ctx::CompilerContext, cfg::Core.Compiler.CFG, phis, idx)
             jparams = [gettype(ctx, T) for T in typeparameters]
             bparams = BinaryenTypeCreate(jparams, length(jparams))
             args = [_compile(ctx, x) for x in sig]
-            if !internalfun
-                if !haskey(ctx.imports, name)
-                    BinaryenAddFunctionImport(ctx.mod, name, "js", jscode, bparams, rettype)
-                    ctx.imports[name] = jscode
-                elseif ctx.imports[name] != name
-                    # error("Mismatch in llvmcall import for $name: $sig vs. $(ctx.imports[name]).")
+            if !internalfun && !startswith(jscode, "host")
+                # remove js function call
+                x = BinaryenUnreachable(ctx.mod)
+            else
+                if !internalfun
+                    if !haskey(ctx.imports, name)
+                        rest = jscode[6:end]   # strip "host:"
+                        sepidx = findfirst(':', rest)
+                        sepidx === nothing && error("host: import must be \"host:<module>:<name>\", got $jscode")
+                        hostmodule = rest[1:sepidx-1]
+                        hostname = rest[sepidx+1:end]
+                        BinaryenAddFunctionImport(ctx.mod, name, hostmodule, hostname, bparams, rettype)
+
+                        ctx.imports[name] = jscode
+                    elseif ctx.imports[name] != name
+                        # error("Mismatch in llvmcall import for $name: $sig vs. $(ctx.imports[name]).")
+                    end
                 end
+                x = BinaryenCall(ctx.mod, name, args, length(args), rettype)
             end
-            x = BinaryenCall(ctx.mod, name, args, length(args), rettype)
             if jlrettype == Nothing
                 push!(ctx.body, x)
             else

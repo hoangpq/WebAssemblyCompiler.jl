@@ -19,6 +19,7 @@ include("compile_block.jl")
 include("_compile.jl")
 include("utils.jl")
 include("javascript-interop.jl")
+include("endive-interop.jl")
 include("quirks.jl")
 include("compiler.jl")
 
